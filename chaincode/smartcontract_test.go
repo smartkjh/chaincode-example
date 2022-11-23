@@ -37,11 +37,6 @@ type Asset struct {
 	AppraisedValue int    `json:"appraisedValue"`
 }
 
-// AssetID ...
-type AssetID struct {
-	ID             string `json:"ID"`
-}
-
 func TestInitLedger(t *testing.T) {
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}

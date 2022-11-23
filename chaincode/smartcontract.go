@@ -3,6 +3,7 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -18,16 +19,6 @@ type Asset struct {
 	Size           int    `json:"size"`
 	Owner          string `json:"owner"`
 	AppraisedValue int    `json:"appraisedValue"`
-}
-
-// AssetID ...
-type AssetID struct {
-	ID             string `json:"id"`
-}
-
-type AssetTransfer struct {
-	ID             string `json:"id"`
-	Owner          string `json:"owner"`
 }
 
 // InitLedger adds a base set of assets to the ledger
@@ -61,6 +52,9 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 	var assetEnrollRequest Asset
 	err := json.Unmarshal([]byte(rawAssetEnrollRequest), &assetEnrollRequest)
+	if err != nil {
+		return "", err
+	}
 
 	exists, err := s.AssetExists(ctx, assetEnrollRequest.ID)
 	if err != nil {
@@ -85,7 +79,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 // ReadAsset returns the asset stored in the world state with given id.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, rawAssetReadRequest string) (*Asset, error) {
-	var assetReadRequest AssetID
+	var assetReadRequest Asset
 	err := json.Unmarshal([]byte(rawAssetReadRequest), &assetReadRequest)
 	if err != nil {
 		return nil, err
@@ -113,6 +107,9 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 	var assetUpdateRequest Asset
 	err := json.Unmarshal([]byte(rawAssetUpdateRequest), &assetUpdateRequest)
+	if err != nil {
+		return "", err
+	}
 
 	exists, err := s.AssetExists(ctx, assetUpdateRequest.ID)
 	if err != nil {
@@ -137,7 +134,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 // DeleteAsset deletes an given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, rawAssetDeleteRequest string) (string, error) {
-	var assetDeleteRequest AssetID
+	var assetDeleteRequest Asset
 	err := json.Unmarshal([]byte(rawAssetDeleteRequest), &assetDeleteRequest)
 	if err != nil {
 		return "", err
@@ -169,13 +166,22 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 	return assetJSON != nil, nil
 }
 
-// TODO: resolve this
 // TransferAsset updates the owner field of asset with given id in world state.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, rawAssetTransferRequest string) (string, error) {
-	var assetTransferRequest AssetTransfer
+	var assetTransferRequest Asset
 	err := json.Unmarshal([]byte(rawAssetTransferRequest), &assetTransferRequest)
+	if err != nil {
+		return "", err
+	}
+	exists, err := s.AssetExists(ctx, assetTransferRequest.ID)
+	if err != nil {
+		return "", err
+	}
+	if !exists {
+		return "", fmt.Errorf("the asset %s does not exist", assetTransferRequest.ID)
+	}
 
-	asset, err := s.ReadAsset(ctx, assetTransferRequest.ID)
+	asset, err := s.ReadAsset(ctx, rawAssetTransferRequest)
 	if err != nil {
 		return "", err
 	}
