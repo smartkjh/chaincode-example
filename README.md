@@ -1,2 +1,1 @@
 # chaincode-example
-# chaincode-example
